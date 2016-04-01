@@ -1,11 +1,4 @@
 /*
- * CCSv6 project using TI-RTOS
- *
- */
-
-
-
-/*
  *  ======== StartBIOS.c ========
  */
 /* XDCtools Header files */
@@ -20,12 +13,13 @@
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Mailbox.h>
 #include <ti/sysbios/knl/Event.h>
-#include <ti/sysbios/knl/Task.h>
+
 #include <ti/sysbios/hal/Timer.h>
 #include <ti/sysbios/knl/Event.h>
 
 /* TI-RTOS Header files */
 #include <ti/drivers/UART.h>
+#include <ti/drivers/PWM.h>
 
 
 /*Board Header files */
@@ -36,19 +30,21 @@
 #include <ctype.h>
 #include <string.h>
 
-
-int main(void)
-
-{
-
-    uint32_t ui32SysClock;
-
-	/* Call board init functions. */
-	ui32SysClock = Board_initGeneral(120*1000*1000);
-	(void)ui32SysClock; // We don't really need this (yet)
+/* project specific files */
+#include <DRV8301.h>
 
 
 
+int main(void) {
+
+    /* Call board init functions. */
+	Board_initGeneral(120*1000*1000);
+
+	Board_initGPIO();
+	Board_initSPI();
+	PWM_init();
+
+	ScheduleDrv8301SetupTask();
     /* SysMin will only print to the console upon calling flush or exit */
 
     System_printf("Starting Autonomous Carrera/Driver Challenge\n");

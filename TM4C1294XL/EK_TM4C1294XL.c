@@ -410,11 +410,17 @@ const PWMTiva_HWAttrs pwmTivaHWAttrs[EK_TM4C1294XL_PWMCOUNT] = {
         PWM0_BASE,
         PWM_OUT_0,
         PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
-    }
+    },
+	{
+		PWM0_BASE,
+		PWM_OUT_1,
+		PWM_GEN_MODE_DOWN | PWM_GEN_MODE_DBG_RUN
+	}
 };
 
 const PWM_Config PWM_config[] = {
     {&PWMTiva_fxnTable, &pwmTivaObjects[0], &pwmTivaHWAttrs[0]},
+	{&PWMTiva_fxnTable, &pwmTivaObjects[1], &pwmTivaHWAttrs[1]},
     {NULL, NULL, NULL}
 };
 
@@ -432,7 +438,9 @@ void EK_TM4C1294XL_initPWM(void)
      * below will disable Ethernet functionality.
      */
     GPIOPinConfigure(GPIO_PF0_M0PWM0);
+    GPIOPinConfigure(GPIO_PF1_M0PWM1);
     GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_0);
+    GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_1);
 
     PWM_init();
 }
