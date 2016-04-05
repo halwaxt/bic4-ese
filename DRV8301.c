@@ -169,15 +169,15 @@ void SetupDrv8301Task(void) {
 	PWM_Params pwmParams;
 	PWM_Params_init(&pwmParams);
 	pwmParams.dutyMode = PWM_DUTY_SCALAR;
-	pwmParams.period = 20000; // mySec
+	pwmParams.period = 10000; // mySec
 	pwmParams.polarity = PWM_POL_ACTIVE_HIGH;
 
 	pwmHandle = PWM_open(Board_PWM1, &pwmParams);
 	if (pwmHandle == NULL) {
-		System_printf("SPI transfer failed!\n");
+		System_printf("PWM handle creation failed!\n");
 	}
 	else {
-		PWM_setDuty(pwmHandle, 10000);
+		PWM_setDuty(pwmHandle, 48000);
 	}
 
 	//PWM_close(pwmHandle);

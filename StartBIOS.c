@@ -42,7 +42,7 @@ int main(void) {
 
 	Board_initGPIO();
 	Board_initSPI();
-	PWM_init();
+	//PWM_init();
 
 	ScheduleDrv8301SetupTask();
     /* SysMin will only print to the console upon calling flush or exit */
