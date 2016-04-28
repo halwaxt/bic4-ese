@@ -18,6 +18,7 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/Memory.h>
 
+#include <ti/sysbios/BIOS.h>
 #include <inc/hw_memmap.h>/*supplies GPIO_PORTx_BASE*/
 #include <driverlib/gpio.h>
 #include <driverlib/pin_map.h>/*supplies GPIO_PIN_x*/
@@ -118,7 +119,11 @@ void initDRV8301PWM(void) {
 }
 
 
-void SetupDrv8301Task(void) {
+void SetupDrv8301Task(UArg arg0) {
+
+	if (arg0 == NULL) System_abort("Expected a Mailbox_Handle parameter\n");
+	Mailbox_Handle pwmMailbox = (Mailbox_Handle) arg0;
+
 	/* check if ethernet functionality is still enabled! See EK_TM4C1294XL_initPWM() code comments */
 	EK_TM4C1294XL_initPWM();
 	initializeDrv8301();
@@ -135,7 +140,7 @@ void SetupDrv8301Task(void) {
 
 	spiHandle = SPI_open(Board_SPI0, &spiParams);
 	if (spiHandle == NULL) {
-		System_printf("failed to open SPI handle\n");
+		System_abort("failed to open SPI handle\n");
 	}
 
 	UShort spiRxBuffer[2];
@@ -162,49 +167,44 @@ void SetupDrv8301Task(void) {
 
 	success = SPI_transfer(spiHandle, &spiTransaction);
 	if (!success) {
-		System_printf("SPI transfer failed!\n");
+		System_abort("SPI transfer failed!\n");
 	}
 
 	PWM_Handle pwmHandle;
 	PWM_Params pwmParams;
 	PWM_Params_init(&pwmParams);
 	pwmParams.dutyMode = PWM_DUTY_SCALAR;
-	pwmParams.period = 10000; // mySec
+	pwmParams.period = 25000; // mySec
 	pwmParams.polarity = PWM_POL_ACTIVE_HIGH;
 
 	pwmHandle = PWM_open(Board_PWM1, &pwmParams);
 	if (pwmHandle == NULL) {
-		System_printf("PWM handle creation failed!\n");
-	}
-	else {
-		PWM_setDuty(pwmHandle, 48000);
+		System_abort("PWM handle creation failed!\n");
 	}
 
-	//PWM_close(pwmHandle);
+	uint32_t duty = 0;
+	while (1) {
+		if (Mailbox_pend(pwmMailbox, &duty, BIOS_WAIT_FOREVER)) {
+			PWM_setDuty(pwmHandle, duty);
+		}
+	}
 
-
-
-
-
+	PWM_close(pwmHandle);
 	DisableDRV8301SPI();
-
 	SPI_close(spiHandle);
-
 }
 
 
-void ScheduleDrv8301SetupTask(void) {
-
+void ScheduleDrv8301SetupTask(Mailbox_Handle pwmMailbox, Error_Block *errorBlock) {
 
 	Task_Params setupDrv8301TaskParams;
 	Task_Handle setupDrv8301TaskHandle;
-	Error_Block eb;
 
-	Error_init(&eb);
 	Task_Params_init(&setupDrv8301TaskParams);
 	setupDrv8301TaskParams.stackSize = 1024;/*stack in bytes*/
 	setupDrv8301TaskParams.priority = 7;
-	setupDrv8301TaskHandle = Task_create((Task_FuncPtr)SetupDrv8301Task, &setupDrv8301TaskParams, &eb);
+	setupDrv8301TaskParams.arg0 = pwmMailbox;
+	setupDrv8301TaskHandle = Task_create((Task_FuncPtr)SetupDrv8301Task, &setupDrv8301TaskParams, errorBlock);
 	if (setupDrv8301TaskHandle == NULL) {
 		System_abort("Task setupDrv8301Task create failed");
 	}

@@ -8,6 +8,7 @@
 #ifndef LOCAL_INC_DRV8301_H_
 #define LOCAL_INC_DRV8301_H_
 
+#include <ti/sysbios/knl/Mailbox.h>
 
 #define MODE_READ  0b1000000000000000
 #define MODE_WRITE 0b0000000000000000
@@ -28,6 +29,6 @@
 
 #define REGISTER_CONTROL_1_OC_ADJ_SET_0097 0b0000000100000000
 
-void ScheduleDrv8301SetupTask(void);
+void ScheduleDrv8301SetupTask(Mailbox_Handle pwmMailbox, Error_Block *errorBlock);
 
 #endif /* LOCAL_INC_DRV8301_H_ */

@@ -17,9 +17,8 @@
 #include <ti/sysbios/knl/Semaphore.h>
 #include <ti/sysbios/knl/Mailbox.h>
 #include <ti/sysbios/knl/Event.h>
-
+#include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/hal/Timer.h>
-#include <ti/sysbios/knl/Event.h>
 #include <ti/sysbios/knl/Task.h>
 
 /* TI-RTOS Header files */
@@ -50,6 +49,10 @@ static HANDLE   hConsole = 0;
 static char     InBuf[INMAX];
 static int      InIdx = 0;
 static int      InCnt = 0;
+
+static uint32_t globalDuty = 0;
+#define MAX_DUTY 65534
+#define INC_DUTY 8192
 
 int printfToClient(const char *format, ...)
 {
@@ -272,6 +275,20 @@ SOCKET TelnetClientHandler(PSA pClient) {
 }
 
 
+void onClockElapsed(UArg pwmMailbox) {
+
+	globalDuty += INC_DUTY;
+	if (globalDuty > MAX_DUTY) {
+		globalDuty = INC_DUTY;
+	}
+
+
+	if (! Mailbox_post(pwmMailbox, &globalDuty, BIOS_NO_WAIT)) {
+	    System_printf("failed to post duty value to pwm mailbox.\n");
+	    System_flush();
+	}
+}
+
 int main(void) {
 
     /* Call board init functions. */
@@ -280,10 +297,28 @@ int main(void) {
 	Board_initGPIO();
 	Board_initSPI();
 	Board_initEMAC();
-	//EMAC_init();
 	PWM_init();
 
-	ScheduleDrv8301SetupTask();
+	Error_Block errorBlock;
+	Error_init(&errorBlock);
+
+	Mailbox_Params pwmMailboxParams;
+	Mailbox_Params_init(&pwmMailboxParams);
+
+	Mailbox_Handle pwmMailbox = Mailbox_create(sizeof(uint32_t), 1, &pwmMailboxParams, &errorBlock);
+	if (pwmMailbox == NULL) {
+		System_abort("creating mailbox for pwm failed!\n");
+	}
+
+
+	Clock_Params clockParameters;
+	Clock_Params_init(&clockParameters);
+	clockParameters.period = 250; /* ms */
+	clockParameters.startFlag = TRUE;
+	clockParameters.arg = pwmMailbox;
+	Clock_create((Clock_FuncPtr)onClockElapsed, 1000, &clockParameters, NULL);
+
+	ScheduleDrv8301SetupTask(pwmMailbox, &errorBlock);
     /* SysMin will only print to the console upon calling flush or exit */
 
     System_printf("Starting Autonomous Carrera/Driver Challenge\n");
