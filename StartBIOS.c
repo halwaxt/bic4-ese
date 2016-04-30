@@ -37,8 +37,9 @@
 #include <ti/ndk/inc/_stack.h>
 
 /* project specific files */
+#include <Communication.h>
 #include <DRV8301.h>
-
+#include <TrackSupervisor.h>
 
 static char *StrBusy  = "\nConsole is busy\n\n";
 static char *StrError = "\nCould not spawn console\n\n";
@@ -50,9 +51,10 @@ static char     InBuf[INMAX];
 static int      InIdx = 0;
 static int      InCnt = 0;
 
-static uint32_t globalDuty = 0;
-#define MAX_DUTY 65534
-#define INC_DUTY 8192
+static uint32_t globalSectorIndex = 0;
+
+CommunicationInfrastructure globalCommInfrastructure;
+
 
 int printfToClient(const char *format, ...)
 {
@@ -203,6 +205,7 @@ int getStringFRomConsole( char *buf, int max, int echo )
 
 void console( SOCKET sCon, PSA pClient )
 {
+
     uint   tmp;
     char   tstr[80];
     char   *tok[10];
@@ -275,15 +278,12 @@ SOCKET TelnetClientHandler(PSA pClient) {
 }
 
 
-void onClockElapsed(UArg pwmMailbox) {
-
-	globalDuty += INC_DUTY;
-	if (globalDuty > MAX_DUTY) {
-		globalDuty = INC_DUTY;
-	}
+void onClockElapsed(UArg arg) {
+	globalSectorIndex++;
+	if (globalSectorIndex > 5) globalSectorIndex=0;
 
 
-	if (! Mailbox_post(pwmMailbox, &globalDuty, BIOS_NO_WAIT)) {
+	if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &globalSectorIndex, BIOS_NO_WAIT)) {
 	    System_printf("failed to post duty value to pwm mailbox.\n");
 	    System_flush();
 	}
@@ -302,23 +302,34 @@ int main(void) {
 	Error_Block errorBlock;
 	Error_init(&errorBlock);
 
+
 	Mailbox_Params pwmMailboxParams;
 	Mailbox_Params_init(&pwmMailboxParams);
 
-	Mailbox_Handle pwmMailbox = Mailbox_create(sizeof(uint32_t), 1, &pwmMailboxParams, &errorBlock);
-	if (pwmMailbox == NULL) {
+	globalCommInfrastructure.pwmMailbox = Mailbox_create(sizeof(uint32_t), 1, &pwmMailboxParams, &errorBlock);
+	if (globalCommInfrastructure.pwmMailbox == NULL) {
 		System_abort("creating mailbox for pwm failed!\n");
 	}
 
+	Mailbox_Params sectorIndexMailboxParams;
+	Mailbox_Params_init(&sectorIndexMailboxParams);
+
+	globalCommInfrastructure.sectorIndexMailbox = Mailbox_create(sizeof(uint32_t), 1, &sectorIndexMailboxParams, &errorBlock);
+	if (globalCommInfrastructure.sectorIndexMailbox == NULL) {
+		System_abort("creating mailbox for sector indexes failed!\n");
+	}
 
 	Clock_Params clockParameters;
 	Clock_Params_init(&clockParameters);
 	clockParameters.period = 250; /* ms */
 	clockParameters.startFlag = TRUE;
-	clockParameters.arg = pwmMailbox;
+
 	Clock_create((Clock_FuncPtr)onClockElapsed, 1000, &clockParameters, NULL);
 
-	ScheduleDrv8301SetupTask(pwmMailbox, &errorBlock);
+	SetupPwmControllerTask(&errorBlock);
+	SetupTrackSupervisorTask(&errorBlock);
+
+
     /* SysMin will only print to the console upon calling flush or exit */
 
     System_printf("Starting Autonomous Carrera/Driver Challenge\n");

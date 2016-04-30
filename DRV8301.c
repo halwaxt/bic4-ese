@@ -27,7 +27,10 @@
 #include <ti/drivers/SPI.h>
 #include <ti/sysbios/knl/Task.h>
 #include <DRV8301.h>
+#include <Communication.h>
 
+
+extern CommunicationInfrastructure globalCommInfrastructure;
 
 void initializeDrv8301(void) {
 
@@ -119,10 +122,7 @@ void initDRV8301PWM(void) {
 }
 
 
-void SetupDrv8301Task(UArg arg0) {
-
-	if (arg0 == NULL) System_abort("Expected a Mailbox_Handle parameter\n");
-	Mailbox_Handle pwmMailbox = (Mailbox_Handle) arg0;
+void PwmControllerTask() {
 
 	/* check if ethernet functionality is still enabled! See EK_TM4C1294XL_initPWM() code comments */
 	EK_TM4C1294XL_initPWM();
@@ -184,27 +184,22 @@ void SetupDrv8301Task(UArg arg0) {
 
 	uint32_t duty = 0;
 	while (1) {
-		if (Mailbox_pend(pwmMailbox, &duty, BIOS_WAIT_FOREVER)) {
+		if (Mailbox_pend(globalCommInfrastructure.pwmMailbox, &duty, BIOS_WAIT_FOREVER)) {
 			PWM_setDuty(pwmHandle, duty);
 		}
 	}
-
-	PWM_close(pwmHandle);
-	DisableDRV8301SPI();
-	SPI_close(spiHandle);
 }
 
 
-void ScheduleDrv8301SetupTask(Mailbox_Handle pwmMailbox, Error_Block *errorBlock) {
+void SetupPwmControllerTask(Error_Block *errorBlock) {
 
-	Task_Params setupDrv8301TaskParams;
+	Task_Params pwmControllerTaskParams;
 	Task_Handle setupDrv8301TaskHandle;
 
-	Task_Params_init(&setupDrv8301TaskParams);
-	setupDrv8301TaskParams.stackSize = 1024;/*stack in bytes*/
-	setupDrv8301TaskParams.priority = 7;
-	setupDrv8301TaskParams.arg0 = pwmMailbox;
-	setupDrv8301TaskHandle = Task_create((Task_FuncPtr)SetupDrv8301Task, &setupDrv8301TaskParams, errorBlock);
+	Task_Params_init(&pwmControllerTaskParams);
+	pwmControllerTaskParams.stackSize = 1024;/*stack in bytes*/
+	pwmControllerTaskParams.priority = 7;
+	setupDrv8301TaskHandle = Task_create((Task_FuncPtr)PwmControllerTask, &pwmControllerTaskParams, errorBlock);
 	if (setupDrv8301TaskHandle == NULL) {
 		System_abort("Task setupDrv8301Task create failed");
 	}
