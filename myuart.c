@@ -12,6 +12,7 @@
 #include <Board.h>
 #include <driverlib/sysctl.h>
 #include <ti/sysbios/BIOS.h>
+#include <inc/hw_memmap.h>
 
 #include <ti/sysbios/knl/Task.h>
 #include <driverlib/gpio.h>
