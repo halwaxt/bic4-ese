@@ -10,6 +10,7 @@
 #include <EK_TM4C1294XL.h>
 #include <driverlib/i2c.h>
 #include <driverlib/pin_map.h>
+#include <inc/hw_memmap.h>
 
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>

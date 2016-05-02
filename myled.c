@@ -15,6 +15,7 @@
 #include <ti/sysbios/knl/Task.h>
 #include <xdc/runtime/System.h>
 #include <xdc/runtime/Error.h>
+#include <inc/hw_memmap.h>
 
 #include <math.h>
 
