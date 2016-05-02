@@ -185,6 +185,8 @@ void PwmControllerTask() {
 	uint32_t duty = 0;
 	while (1) {
 		if (Mailbox_pend(globalCommInfrastructure.pwmMailbox, &duty, BIOS_WAIT_FOREVER)) {
+			System_printf("Use: %d\n", duty);
+						System_flush();
 			PWM_setDuty(pwmHandle, duty);
 		}
 	}

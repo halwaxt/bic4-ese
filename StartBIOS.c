@@ -25,6 +25,8 @@
 #include <ti/drivers/UART.h>
 #include <ti/drivers/PWM.h>
 
+#include <driverlib/sysctl.h>
+
 
 /*Board Header files */
 #include <Board.h>
@@ -40,6 +42,10 @@
 #include <Communication.h>
 #include <DRV8301.h>
 #include <TrackSupervisor.h>
+#include <myir.h>
+#include <myled.h>
+#include <myuart.h>
+#include <myinterrupt.h>
 
 static char *StrBusy  = "\nConsole is busy\n\n";
 static char *StrError = "\nCould not spawn console\n\n";
@@ -289,6 +295,20 @@ void onClockElapsed(UArg arg) {
 	}
 }
 
+void activatePort(uint32_t port) {
+	SysCtlPeripheralEnable(port);
+}
+
+void preparePorts() {
+	activatePort(SYSCTL_PERIPH_GPIOF);
+	activatePort(SYSCTL_PERIPH_GPIOH);
+	activatePort(SYSCTL_PERIPH_GPIOK);
+}
+
+void prepareHardware() {
+	preparePorts();
+}
+
 int main(void) {
 
     /* Call board init functions. */
@@ -301,7 +321,6 @@ int main(void) {
 
 	Error_Block errorBlock;
 	Error_init(&errorBlock);
-
 
 	Mailbox_Params pwmMailboxParams;
 	Mailbox_Params_init(&pwmMailboxParams);
@@ -319,16 +338,33 @@ int main(void) {
 		System_abort("creating mailbox for sector indexes failed!\n");
 	}
 
-	Clock_Params clockParameters;
+	/* Clock_Params clockParameters;
 	Clock_Params_init(&clockParameters);
-	clockParameters.period = 250; /* ms */
+	clockParameters.period = 250; // ms
 	clockParameters.startFlag = TRUE;
 
-	Clock_create((Clock_FuncPtr)onClockElapsed, 1000, &clockParameters, NULL);
+	Clock_create((Clock_FuncPtr)onClockElapsed, 1000, &clockParameters, NULL); */
 
 	SetupPwmControllerTask(&errorBlock);
 	SetupTrackSupervisorTask(&errorBlock);
 
+	prepareHardware();
+
+	initialize_IR();
+
+	initialize_LED();
+
+	initializeUART();
+
+	initializeInterrupts();
+
+	// setup_IR_Task();
+
+	// setup_UART_Task();
+
+	setup_Interrupts();
+
+	setup_Clock_Task(1); // 1000 = 1sec, 10 = 0,01sec, 1 = 0,001sec
 
     /* SysMin will only print to the console upon calling flush or exit */
 
