@@ -7,4 +7,9 @@ Debug/
 .config/
 .settings/
 src/sysbios/*.obj
+.ccsproject
+.cproject
+.project
+src/.exclude
+
 
