@@ -16,7 +16,7 @@ extern CommunicationInfrastructure globalCommInfrastructure;
 void TrackSupervisorTask() {
 	const uint32_t sectorPower[] = { 3*8192, 4*8192, 5*8192, 6*8192, 7*8192, 8*8192 -1};
 	uint32_t sectorIndex = 0;
-	uint32_t currentPowerValue = 24; // initial value for start
+	uint32_t currentPowerValue = 3*8192; // initial value for start
 
 	if (! Mailbox_post(globalCommInfrastructure.pwmMailbox, &currentPowerValue, BIOS_NO_WAIT)) {
 		System_printf("Could not post to pwmMailbox.\n");
