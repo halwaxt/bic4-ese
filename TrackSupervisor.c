@@ -19,7 +19,11 @@ extern uint32_t lastInterruptTick;
 void TrackSupervisorTask() {
 	const uint32_t sectorPower[] = { 3*8192, 4*8192, 4*8192, 6*8192, 7*8192, 8*8192 -1};
 	uint32_t sectorIndex = 0;
+<<<<<<< HEAD
 	uint32_t currentPowerValue = 2*8192; // initial value for start
+=======
+	uint32_t currentPowerValue = 3*8192; // initial value for start
+>>>>>>> cfe1245147ea257600d4c32386bede727c2ccafe
 
 	if (! Mailbox_post(globalCommInfrastructure.pwmMailbox, &currentPowerValue, BIOS_NO_WAIT)) {
 		System_printf("Could not post to pwmMailbox.\n");
