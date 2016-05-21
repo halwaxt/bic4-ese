@@ -13,7 +13,14 @@
 typedef struct CommunicationInfrastructure {
 	Mailbox_Handle pwmMailbox;
 	Mailbox_Handle sectorIndexMailbox;
+	Mailbox_Handle sectorDataMailbox;
 } CommunicationInfrastructure;
+
+typedef struct SectorData {
+	uint32_t sectorIndex;
+	uint32_t tickCount;
+	uint32_t powerValue;
+} SectorData;
 
 
 #endif /* LOCAL_INC_COMMUNICATION_H_ */

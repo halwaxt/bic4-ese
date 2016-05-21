@@ -38,7 +38,7 @@ int countSensor4 = 0;
 int countSensor5 = 0;
 int countSensor6 = 0;
 
-uint32_t tickCount = 0;
+
 
 uint32_t  *sectorPointer;
 uint32_t s1 = 1;
@@ -49,6 +49,8 @@ uint32_t s5 = 5;
 uint32_t s6 = 0;
 
 extern CommunicationInfrastructure globalCommInfrastructure;
+extern uint32_t tickCount;
+extern uint32_t lastInterruptTick;
 
 RoundInformation myRoundInformation;
 
@@ -77,12 +79,14 @@ void isr_1_2_sensor_method(UArg arg0) {
 	state = GPIOIntStatus(GPIO_PORTH_BASE, true);
 	GPIOIntClear(GPIO_PORTH_BASE, GPIO_INT_PIN_0 | GPIO_INT_PIN_1);
 
-	if (state == GPIO_INT_PIN_0 && countWatchdog > countSensor1) { // 1
+	if (state == GPIO_INT_PIN_0 && (tickCount - lastInterruptTick) > 5) {
+		lastInterruptTick = tickCount;
 		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s1, BIOS_NO_WAIT)) {
 			System_printf("failed to post duty value to pwm mailbox.\n");
 			// System_flush();
 		}
 
+		/*
 		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0);
 		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0b0000001);
 		countSensor1 = countWatchdog + 1;
@@ -90,14 +94,17 @@ void isr_1_2_sensor_method(UArg arg0) {
 		System_printf("Finished Sektor 1 - %d\n", tickCount);
 		myRoundInformation.one = tickCount;
 		tickCount = 0;
-		// System_flush();
+		System_flush();
+
+		 */
 	}
-	if (state == GPIO_INT_PIN_1 && countWatchdog > countSensor2) { // 2
+	if (state == GPIO_INT_PIN_1 &&(tickCount - lastInterruptTick) > 5) {
+		lastInterruptTick = tickCount;
 		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s2, BIOS_NO_WAIT)) {
 			System_printf("failed to post duty value to pwm mailbox.\n");
 			// System_flush();
 		}
-
+		/*
 		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0b0010000);
 		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0);
 		countSensor2 = countWatchdog + 1;
@@ -105,6 +112,7 @@ void isr_1_2_sensor_method(UArg arg0) {
 		System_printf("Finished Sektor 2 - %d\n", tickCount);
 		myRoundInformation.one = tickCount;
 		tickCount = 0;
+		*/
 		// System_flush();
 	}
 }
@@ -114,7 +122,7 @@ void isr_3_6_sensor_method(UArg arg0) {
 	GPIOIntClear(GPIO_PORTK_BASE,
 	GPIO_INT_PIN_4 | GPIO_INT_PIN_5 | GPIO_INT_PIN_6 | GPIO_INT_PIN_7);
 
-	if (state == GPIO_INT_PIN_4 && countWatchdog > countSensor3) { // 3
+	if (state == GPIO_INT_PIN_4) {// && countWatchdog > countSensor3) { // 3
 		if (!Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s3, BIOS_NO_WAIT)) {
 			System_printf("failed to post duty value to pwm mailbox.\n");
 			// System_flush();
@@ -220,6 +228,7 @@ void setup_Interrupts() {
 	HWIParams.enableInt = false;
 	HWIParams.priority = 32;
 
+
 	Hwi = Hwi_create(INT_GPIOH_TM4C129, isr_1_2_sensor_method, &HWIParams, &eb);
 	if (Hwi == NULL) {
 		System_abort("HWI create failed");
@@ -244,12 +253,14 @@ void setup_Interrupts() {
 	// END
 
 	// Interrupt for WATCHDOG - START
+	/*
 	Watchdog_Params params;
 	Watchdog_Handle watchdog;
 
 	(void) Board_initWatchdog();
-
+	*/
 	/* Create and enable a Watchdog with resets enabled */
+	/*
 	Watchdog_Params_init(&params);
 	params.callbackFxn = watchdog_method;
 	params.resetMode = Watchdog_RESET_OFF;
@@ -258,6 +269,7 @@ void setup_Interrupts() {
 	if (watchdog == NULL) {
 		System_abort("Error opening Watchdog!\n");
 	}
+	*/
 	// END
 
 	// Mailbox - START

@@ -7,16 +7,19 @@
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
+#include <xdc/runtime/Timestamp.h>
 #include <ctype.h>
 #include <stdint.h>
 #include <TrackSupervisor.h>
 
 extern CommunicationInfrastructure globalCommInfrastructure;
+extern uint32_t tickCount;
+extern uint32_t lastInterruptTick;
 
 void TrackSupervisorTask() {
-	const uint32_t sectorPower[] = { 3*8192, 4*8192, 5*8192, 6*8192, 7*8192, 8*8192 -1};
+	const uint32_t sectorPower[] = { 3*8192, 4*8192, 4*8192, 6*8192, 7*8192, 8*8192 -1};
 	uint32_t sectorIndex = 0;
-	uint32_t currentPowerValue = 24; // initial value for start
+	uint32_t currentPowerValue = 2*8192; // initial value for start
 
 	if (! Mailbox_post(globalCommInfrastructure.pwmMailbox, &currentPowerValue, BIOS_NO_WAIT)) {
 		System_printf("Could not post to pwmMailbox.\n");
@@ -26,6 +29,7 @@ void TrackSupervisorTask() {
 	while(1) {
 		if (Mailbox_pend(globalCommInfrastructure.sectorIndexMailbox, &sectorIndex, BIOS_WAIT_FOREVER)) {
 			currentPowerValue = sectorPower[sectorIndex];
+			System_printf("Finished Sektor %d - %d\n", sectorIndex, tickCount);
 			if (! Mailbox_post(globalCommInfrastructure.pwmMailbox, &currentPowerValue, BIOS_NO_WAIT)) {
 				System_printf("Could not post to pwmMailbox.\n");
 			    System_flush();

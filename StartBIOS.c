@@ -42,6 +42,7 @@
 #include <Communication.h>
 #include <DRV8301.h>
 #include <TrackSupervisor.h>
+#include <Publisher.h>
 #include <myir.h>
 #include <myled.h>
 #include <myuart.h>
@@ -57,7 +58,9 @@ static char     InBuf[INMAX];
 static int      InIdx = 0;
 static int      InCnt = 0;
 
-static uint32_t globalSectorIndex = 0;
+ uint32_t globalSectorIndex = 0;
+ uint32_t tickCount = 0;
+ uint32_t lastInterruptTick = 0;
 
 CommunicationInfrastructure globalCommInfrastructure;
 
@@ -338,6 +341,14 @@ int main(void) {
 		System_abort("creating mailbox for sector indexes failed!\n");
 	}
 
+	Mailbox_Params sectorDataMailboxParams;
+	Mailbox_Params_init(&sectorDataMailboxParams);
+
+	globalCommInfrastructure.sectorDataMailbox = Mailbox_create(sizeof(SectorData), 8, &sectorDataMailboxParams, &errorBlock);
+	if (globalCommInfrastructure.sectorDataMailbox == NULL) {
+		System_abort("creating mailbox for sector data failed!\n");
+	}
+
 	/* Clock_Params clockParameters;
 	Clock_Params_init(&clockParameters);
 	clockParameters.period = 250; // ms
@@ -347,12 +358,13 @@ int main(void) {
 
 	SetupPwmControllerTask(&errorBlock);
 	SetupTrackSupervisorTask(&errorBlock);
+	SetupPublisherTask(&errorBlock);
 
 	prepareHardware();
 
 	initialize_IR();
 
-	initialize_LED();
+	//initialize_LED();
 
 	initializeUART();
 

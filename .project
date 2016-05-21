@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>bic4-ese-try</name>
+	<name>ACDC</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -25,4 +25,10 @@
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>NET_NDK</name>
+			<value>file:/C:/ti/tirtos_tivac_2_14_00_10/products/ndk_2_24_03_35</value>
+		</variable>
+	</variableList>
 </projectDescription>

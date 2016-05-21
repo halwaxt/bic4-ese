@@ -174,7 +174,7 @@ void PwmControllerTask() {
 	PWM_Params pwmParams;
 	PWM_Params_init(&pwmParams);
 	pwmParams.dutyMode = PWM_DUTY_SCALAR;
-	pwmParams.period = 25000; // mySec
+	pwmParams.period = 20000; // mySec
 	pwmParams.polarity = PWM_POL_ACTIVE_HIGH;
 
 	pwmHandle = PWM_open(Board_PWM1, &pwmParams);
