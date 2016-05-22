@@ -7,8 +7,11 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/BIOS.h>
 #include <Publisher.h>
+#include <Communication.h>
 
+extern CommunicationInfrastructure globalCommInfrastructure;
 
 void PublisherTask() {
 
@@ -27,7 +30,7 @@ void SetupPublisherTask(Error_Block *errorBlock) {
 	Task_Params publisherTaskParams;
 	Task_Handle publisherTaskHandle;
 
-	Task_Params_init(&publisherTaskParams);s
+	Task_Params_init(&publisherTaskParams);
 	publisherTaskParams.stackSize = 1024;/*stack in bytes*/
 	publisherTaskParams.priority = 3;
 	publisherTaskHandle = Task_create((Task_FuncPtr)PublisherTask, &publisherTaskParams, errorBlock);

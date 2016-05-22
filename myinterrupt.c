@@ -81,6 +81,7 @@ void isr_1_2_sensor_method(UArg arg0) {
 
 	if (state == GPIO_INT_PIN_0 && (tickCount - lastInterruptTick) > 5) {
 		lastInterruptTick = tickCount;
+		System_printf("Finished Sektor 1\n");
 		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s1, BIOS_NO_WAIT)) {
 			System_printf("failed to post duty value to pwm mailbox.\n");
 			// System_flush();
@@ -100,6 +101,7 @@ void isr_1_2_sensor_method(UArg arg0) {
 	}
 	if (state == GPIO_INT_PIN_1 &&(tickCount - lastInterruptTick) > 5) {
 		lastInterruptTick = tickCount;
+		System_printf("Finished Sektor 2\n");
 		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s2, BIOS_NO_WAIT)) {
 			System_printf("failed to post duty value to pwm mailbox.\n");
 			// System_flush();
