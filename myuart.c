@@ -8,7 +8,6 @@
 #include <ti/drivers/GPIO.h>
 #include <driverlib/pin_map.h>
 #include <ti/sysbios/knl/Mailbox.h>
-#include <myqueue.h>
 #include <Board.h>
 #include <driverlib/sysctl.h>
 #include <ti/sysbios/BIOS.h>
@@ -17,6 +16,7 @@
 #include <ti/sysbios/knl/Task.h>
 #include <driverlib/gpio.h>
 #include <Communication.h>
+#include <myinformation.h>
 
 #include "myinterrupt.h"
 

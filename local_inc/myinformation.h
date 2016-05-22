@@ -6,20 +6,18 @@ Queue_Handle uartQueue;
 // extern Event_Handle uartReadyEvent;
 
 // information, hold by the queue
-typedef struct Information {
-	int id;
-} Information;
-
-typedef struct RoundInformation {
-	unsigned int one;
-	unsigned int two;
-	int finished;
-} RoundInformation;
+typedef struct SensorInformation {
+	char indicator;
+	uint32_t id;
+	uint32_t ticks;
+	uint32_t powerValue;
+	uint32_t roundIdentifier;
+} SensorInformation;
 
 // queue object with above's information
 typedef struct QueueObject {
 	Queue_Elem _elem;
-	struct RoundInformation* myInformationPointer;
+	struct SensorInformation* myInformationPointer;
 } QueueObject;
 
 int setup_Events();

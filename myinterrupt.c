@@ -21,26 +21,17 @@
 #include <ti/sysbios/knl/Mailbox.h>
 #include <time.h>
 
-#include "myqueue.h"
 #include "myinterrupt.h"
-#include <Communication.h>
+#include "hashmap.h"
+#include "Communication.h"
+#include "myinformation.h"
 
 #define F_CPU 120000000 // 120 * 1000 * 1000
 
 uint32_t state = 0;
-Information myInformation;
+SensorInformation myInformation;
 QueueObject myQueueObject;
-int countWatchdog = 0;
-int countSensor1 = 0;
-int countSensor2 = 0;
-int countSensor3 = 0;
-int countSensor4 = 0;
-int countSensor5 = 0;
-int countSensor6 = 0;
 
-
-
-uint32_t  *sectorPointer;
 uint32_t s1 = 1;
 uint32_t s2 = 2;
 uint32_t s3 = 3;
@@ -52,7 +43,23 @@ extern CommunicationInfrastructure globalCommInfrastructure;
 extern uint32_t tickCount;
 extern uint32_t lastInterruptTick;
 
-RoundInformation myRoundInformation;
+#define KEY_MAX_LENGTH (256)
+#define KEY_PREFIX ("")
+#define KEY_COUNT (2)
+
+typedef struct data_struct_s {
+	char key_string[KEY_MAX_LENGTH];
+	int number;
+} data_struct_t;
+
+int error;
+map_t mymap;
+char key_string[KEY_MAX_LENGTH];
+data_struct_t* value;
+
+void initTickCount() {
+	tickCount = 0;
+}
 
 /**
  * usage: this method sets up the environment to make sure that interrupts (hw) are working
@@ -63,57 +70,56 @@ RoundInformation myRoundInformation;
  */
 void initializeInterrupts() {
 	IntMasterEnable();
-	// SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
-	// SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOH);
-	// SysCtlPeripheralEnable(SYSCTL_PERIPH_GPION);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOH);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOK);
-	// SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOJ);
 	SysCtlPeripheralEnable(SYSCTL_PERIPH_WDOG0);
 
-	tickCount = 0;
+	initTickCount();
+}
+
+uint32_t possibleDebounce() {
+	if ((tickCount - lastInterruptTick) > 5) {
+		return 1;
+	}
+	return 0;
+
+}
+
+void setTickVariables() {
+	lastInterruptTick = tickCount;
+}
+
+void postSectorIndexEvent(uint32_t* s) {
+	if (!Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, s,
+	BIOS_NO_WAIT)) {
+		System_printf("failed to post duty value to pwm mailbox.\n");
+	}
+
+}
+
+void postSectorDataEvent(char indicator, uint32_t id, uint32_t powerValue, uint32_t roundIdentifier) {
+	myInformation.indicator = indicator;
+	myInformation.id = id;
+	myInformation.ticks = tickCount;
+	myInformation.powerValue = powerValue;
+	myInformation.roundIdentifier = roundIdentifier;
+	if (!Mailbox_post(globalCommInfrastructure.sectorDataMailbox, &myInformation,
+	BIOS_NO_WAIT)) {
+		System_printf("failed to post duty value to pwm mailbox.\n");
+	}
 }
 
 void isr_1_2_sensor_method(UArg arg0) {
 	state = GPIOIntStatus(GPIO_PORTH_BASE, true);
 	GPIOIntClear(GPIO_PORTH_BASE, GPIO_INT_PIN_0 | GPIO_INT_PIN_1);
 
-	if (state == GPIO_INT_PIN_0 && (tickCount - lastInterruptTick) > 5) {
-		lastInterruptTick = tickCount;
-		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s1, BIOS_NO_WAIT)) {
-			System_printf("failed to post duty value to pwm mailbox.\n");
-			// System_flush();
-		}
-
-		/*
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0);
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0b0000001);
-		countSensor1 = countWatchdog + 1;
-
-		System_printf("Finished Sektor 1 - %d\n", tickCount);
-		myRoundInformation.one = tickCount;
-		tickCount = 0;
-		System_flush();
-
-		 */
-	}
-	if (state == GPIO_INT_PIN_1 &&(tickCount - lastInterruptTick) > 5) {
-		lastInterruptTick = tickCount;
-		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s2, BIOS_NO_WAIT)) {
-			System_printf("failed to post duty value to pwm mailbox.\n");
-			// System_flush();
-		}
-		/*
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0b0010000);
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0);
-		countSensor2 = countWatchdog + 1;
-
-		System_printf("Finished Sektor 2 - %d\n", tickCount);
-		myRoundInformation.one = tickCount;
-		tickCount = 0;
-		*/
-		// System_flush();
+	snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'H', state);
+	if (hashmap_get(mymap, key_string, (void**) (&value)) == 0) {
+		setTickVariables();
+		System_printf("Finished Sektor %d\n", value->number);
+		postSectorIndexEvent(&(value->number));
+		postSectorDataEvent('H', state, (uint32_t) 0, (uint32_t) 1);
 	}
 }
 
@@ -122,74 +128,13 @@ void isr_3_6_sensor_method(UArg arg0) {
 	GPIOIntClear(GPIO_PORTK_BASE,
 	GPIO_INT_PIN_4 | GPIO_INT_PIN_5 | GPIO_INT_PIN_6 | GPIO_INT_PIN_7);
 
-	if (state == GPIO_INT_PIN_4) {// && countWatchdog > countSensor3) { // 3
-		if (!Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s3, BIOS_NO_WAIT)) {
-			System_printf("failed to post duty value to pwm mailbox.\n");
-			// System_flush();
-		}
-
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0b0010000);
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0);
-		countSensor3 = countWatchdog + 1;
-
-		System_printf("Finished Sektor 3 - %d\n", tickCount);
-		myRoundInformation.one = tickCount;
-		tickCount = 0;
-		// System_flush();
+	snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'K', state);
+	if (hashmap_get(mymap, key_string, (void**) (&value)) == 0) {
+		setTickVariables();
+		System_printf("Finished Sektor %d\n", value->number);
+		postSectorIndexEvent(&(value->number));
+		postSectorDataEvent('K', state, (uint32_t) 0, (uint32_t) 1);
 	}
-
-	if (state == GPIO_INT_PIN_5 && countWatchdog > countSensor4) { // 4
-		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s4, BIOS_NO_WAIT)) {
-			System_printf("failed to post duty value to pwm mailbox.\n");
-			// System_flush();
-		}
-
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0b0010000);
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0);
-		countSensor4 = countWatchdog + 1;
-
-		System_printf("Finished Sektor 4 - %d\n", tickCount);
-		myRoundInformation.one = tickCount;
-		tickCount = 0;
-		// System_flush();
-	}
-
-	if (state == GPIO_INT_PIN_6 && countWatchdog > countSensor5) { // 5
-		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s5, BIOS_NO_WAIT)) {
-			System_printf("failed to post duty value to pwm mailbox.\n");
-			// System_flush();
-		}
-
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0b0010000);
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0);
-		countSensor5 = countWatchdog + 1;
-
-		System_printf("Finished Sektor 5 - %d\n", tickCount);
-		myRoundInformation.one = tickCount;
-		tickCount = 0;
-		// System_flush();
-	}
-
-	if (state == GPIO_INT_PIN_7 && countWatchdog > countSensor6) { // 6
-		if (! Mailbox_post(globalCommInfrastructure.sectorIndexMailbox, &s6, BIOS_NO_WAIT)) {
-			System_printf("failed to post duty value to pwm mailbox.\n");
-			// System_flush();
-		}
-
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_4, 0b0010000);
-		GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_0, 0);
-		countSensor6 = countWatchdog + 1;
-
-		System_printf("Finished Sektor 6 - %d\n", tickCount);
-		myRoundInformation.one = tickCount;
-		tickCount = 0;
-		// System_flush();
-	}
-}
-
-void watchdog_method(UArg handle) {
-	countWatchdog++;
-	Watchdog_clear((Watchdog_Handle) handle);
 }
 
 void tick(void) {
@@ -215,6 +160,54 @@ int setup_Clock_Task(uint32_t wait_ticks) {
 	return (0);
 }
 
+void pushMap(char pin, uint32_t interuppt, uint32_t sector) {
+	value = malloc(sizeof(data_struct_t));
+	snprintf(value->key_string, KEY_MAX_LENGTH, "%c%d", pin, interuppt);
+	value->number = sector;
+	error = hashmap_put(mymap, value->key_string, value);
+}
+
+void setupInterruptMap() {
+	mymap = hashmap_new();
+
+	// SETUP H1
+	pushMap('H', GPIO_INT_PIN_0, 1);
+
+	// SETUP H2
+	pushMap('H', GPIO_INT_PIN_1, 2);
+
+	// SETUP K4
+	pushMap('K', GPIO_INT_PIN_4, 3);
+
+	// SETUP K5
+	pushMap('K', GPIO_INT_PIN_5, 4);
+
+	// SETUP K6
+	pushMap('K', GPIO_INT_PIN_6, 5);
+
+	// SETUP K7
+	pushMap('K', GPIO_INT_PIN_7, 6);
+
+	/*
+	 // CHECK H1
+	 snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'H', GPIO_INT_PIN_0);
+	 error = hashmap_get(mymap, key_string, (void**) (&value));
+	 System_printf("\nERROR: %d\n", error);
+	 System_printf("\nVALUE1: %d\n", value->number);
+
+	 // CHECK H2
+	 snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'H', GPIO_INT_PIN_1);
+	 error = hashmap_get(mymap, key_string, (void**) (&value));
+	 System_printf("\nERROR: %d\n", error);
+	 System_printf("\nVALUE2: %d\n", value->number);
+	 */
+
+	/* Now, destroy the map */
+	// hashmap_free(mymap);
+	System_flush();
+
+}
+
 void setup_Interrupts() {
 	Hwi_Params HWIParams;
 	Hwi_Handle Hwi;
@@ -227,7 +220,6 @@ void setup_Interrupts() {
 	HWIParams.arg = 0;
 	HWIParams.enableInt = false;
 	HWIParams.priority = 32;
-
 
 	Hwi = Hwi_create(INT_GPIOH_TM4C129, isr_1_2_sensor_method, &HWIParams, &eb);
 	if (Hwi == NULL) {
@@ -250,38 +242,10 @@ void setup_Interrupts() {
 	GPIOIntEnable(GPIO_PORTK_BASE, GPIO_INT_PIN_6);
 	GPIOIntEnable(GPIO_PORTK_BASE, GPIO_INT_PIN_7);
 
-	// END
+	setupInterruptMap();
 
-	// Interrupt for WATCHDOG - START
-	/*
-	Watchdog_Params params;
-	Watchdog_Handle watchdog;
+	myQueueObject.myInformationPointer = &myInformation;
 
-	(void) Board_initWatchdog();
-	*/
-	/* Create and enable a Watchdog with resets enabled */
-	/*
-	Watchdog_Params_init(&params);
-	params.callbackFxn = watchdog_method;
-	params.resetMode = Watchdog_RESET_OFF;
-
-	watchdog = Watchdog_open(Board_WATCHDOG0, &params);
-	if (watchdog == NULL) {
-		System_abort("Error opening Watchdog!\n");
-	}
-	*/
-	// END
-
-	// Mailbox - START
-	/* Mailbox_Params sectorIndexMailboxParams;
-	Mailbox_Params_init(&sectorIndexMailboxParams);
-	Error_Block errorBlock;
-
-	globalCommInfrastructure.sectorIndexMailbox = Mailbox_create(sizeof(uint32_t), 1,
-			&sectorIndexMailboxParams, &errorBlock);
-	if (globalCommInfrastructure.sectorIndexMailbox == NULL) {
-		System_abort("creating mailbox for sectorIndex failed!\n");
-	} */
-	// END
+// END
 
 }
