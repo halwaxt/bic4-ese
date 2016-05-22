@@ -18,7 +18,7 @@
 #include <xdc/runtime/Error.h>
 
 #include <math.h>
-#include "myqueue.h"
+#include <myinformation.h>
 
 #define F_CPU 16000000
 

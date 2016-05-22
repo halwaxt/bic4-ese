@@ -10,16 +10,17 @@
 #include <ti/sysbios/BIOS.h>
 #include <Publisher.h>
 #include <Communication.h>
+#include <myinformation.h>
 
 extern CommunicationInfrastructure globalCommInfrastructure;
 
 void PublisherTask() {
 
-	SectorData sectorData;
+	SensorInformation sectorData;
 
 	while (1) {
 		if (Mailbox_pend(globalCommInfrastructure.sectorDataMailbox, &sectorData, BIOS_WAIT_FOREVER)) {
-			System_printf("Publishing sector data (power value): %d\n", sectorData.powerValue);
+			System_printf("Publishing sector data (indicator): %c, (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", sectorData.indicator, sectorData.id, sectorData.ticks, sectorData.powerValue, sectorData.roundIdentifier);
 			System_flush();
 		}
 	}
