@@ -8,19 +8,14 @@
 #include <xdc/runtime/Error.h>
 #include <xdc/runtime/System.h>
 #include <ti/sysbios/knl/Task.h>
-<<<<<<< HEAD
 #include <ti/ndk/inc/netmain.h>
 #include <ti/ndk/inc/_stack.h>
 #include <Communication.h>
-=======
-#include <ti/sysbios/BIOS.h>
->>>>>>> 11c965bb8d4f9beb466f3e4362529a5c13c545c8
 #include <Publisher.h>
-#include <Communication.h>
 #include <myinformation.h>
 
 extern CommunicationInfrastructure globalCommInfrastructure;
-<<<<<<< HEAD
+
 
 int getLocalUdpSocket(SOCKET *socketDescriptor) {
 
@@ -71,14 +66,8 @@ void PublisherTask() {
 		struct sockaddr_in targetAddress;
 		memset(&targetAddress, 0, sizeof(targetAddress));
 		targetAddress.sin_family = AF_INET;
-		targetAddress.sin_port = 0x115c;
+		targetAddress.sin_port = htons(44444);
 		targetAddress.sin_addr.s_addr = htonl(0xFFFFFFFF);
-=======
-
-void PublisherTask() {
-
-	SensorInformation sectorData;
->>>>>>> 11c965bb8d4f9beb466f3e4362529a5c13c545c8
 
 		int counter = 0;
 		while(1) {
@@ -98,7 +87,8 @@ void PublisherTask() {
 	}
 	while (1) {
 		if (Mailbox_pend(globalCommInfrastructure.sectorDataMailbox, &sectorData, BIOS_WAIT_FOREVER)) {
-			System_printf("Publishing sector data (indicator): %c, (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", sectorData.indicator, sectorData.id, sectorData.ticks, sectorData.powerValue, sectorData.roundIdentifier);
+			// TODO: use correct fields for sectorData
+			//System_printf("Publishing sector data (indicator): %c, (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", sectorData.indicator, sectorData.id, sectorData.ticks, sectorData.powerValue, sectorData.roundIdentifier);
 			System_flush();
 		}
 	}
