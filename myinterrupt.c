@@ -115,11 +115,11 @@ void isr_1_2_sensor_method(UArg arg0) {
 	GPIOIntClear(GPIO_PORTH_BASE, GPIO_INT_PIN_0 | GPIO_INT_PIN_1);
 
 	snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'H', state);
-	if (hashmap_get(mymap, key_string, (void**) (&value)) == 0) {
+	if ((hashmap_get(mymap, key_string, (void**) (&value)) == 0) && possibleDebounce()) {
 		setTickVariables();
 		System_printf("Finished Sektor %d\n", value->number);
 		postSectorIndexEvent(&(value->number));
-		postSectorDataEvent('H', state, (uint32_t) 0, (uint32_t) 1);
+		postSectorDataEvent('H', state, (uint32_t) 0, (uint32_t) 0);
 	}
 }
 
@@ -129,11 +129,11 @@ void isr_3_6_sensor_method(UArg arg0) {
 	GPIO_INT_PIN_4 | GPIO_INT_PIN_5 | GPIO_INT_PIN_6 | GPIO_INT_PIN_7);
 
 	snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'K', state);
-	if (hashmap_get(mymap, key_string, (void**) (&value)) == 0) {
+	if ((hashmap_get(mymap, key_string, (void**) (&value)) == 0) && possibleDebounce()) {
 		setTickVariables();
 		System_printf("Finished Sektor %d\n", value->number);
 		postSectorIndexEvent(&(value->number));
-		postSectorDataEvent('K', state, (uint32_t) 0, (uint32_t) 1);
+		postSectorDataEvent('K', state, (uint32_t) 0, (uint32_t) 0);
 	}
 }
 

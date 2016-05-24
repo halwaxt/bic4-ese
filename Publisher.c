@@ -17,6 +17,22 @@
 extern CommunicationInfrastructure globalCommInfrastructure;
 
 
+unsigned char *serialize_uint32(unsigned char *buffer, uint32_t value)
+{
+  /* Write big-endian int value into buffer; assumes 32-bit int and 8-bit char. */
+  buffer[0] = value >> 24;
+  buffer[1] = value >> 16;
+  buffer[2] = value >> 8;
+  buffer[3] = value;
+  return buffer + 4;
+}
+
+unsigned char *serialize_char(unsigned char *buffer, char value)
+{
+  buffer[0] = value;
+  return buffer + 1;
+}
+
 int getLocalUdpSocket(SOCKET *socketDescriptor) {
 
 	 struct addrinfo hints;
@@ -46,50 +62,78 @@ int getLocalUdpSocket(SOCKET *socketDescriptor) {
 	 freeaddrinfo(result);           /* No longer needed */
 	 //freeaddrinfo(rp);
 
+	 int optVal = 1;
+	 int optValLen = sizeof(optVal);
+
+	if (setsockopt(socketfd, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, optValLen) == -1) {
+		System_abort("calling setsockopt failed!\n");
+	}
+
 	 *socketDescriptor = socketfd;
 	 return 0;
 }
 
 
+
+
 void PublisherTask() {
+	const int MAX_SECTORS = 2;
+	//SensorInformation track[MAX_SECTORS];
+	SensorInformation currentTrackData;
+	//int currentSectorIndex = 0;
+	int udpTrackPacketLength = MAX_SECTORS * sizeof(SensorInformation);
+	int bytesSent = 0;
+	unsigned char *sendBuffer = malloc(8 * sizeof(unsigned int) + 2 * sizeof(unsigned char));
+	unsigned char *startOfBuffer = sendBuffer;
 
-	SectorData sectorData;
+
 	SOCKET udpSocket;
-	if (getLocalUdpSocket(&udpSocket) == 0) {
-		int optVal = 1;
-		int optValLen = sizeof(optVal);
-
-		if (setsockopt(udpSocket, SOL_SOCKET, SO_BROADCAST, (char*)&optVal, optValLen) == -1) {
-			System_abort("calling setsockopt failed!\n");
-		}
-
-		struct sockaddr_in targetAddress;
-		memset(&targetAddress, 0, sizeof(targetAddress));
-		targetAddress.sin_family = AF_INET;
-		targetAddress.sin_port = htons(44444);
-		targetAddress.sin_addr.s_addr = htonl(0xFFFFFFFF);
-
-		int counter = 0;
-		while(1) {
-			sectorData.powerValue = 23412;
-			sectorData.sectorIndex = ++counter;
-			sectorData.tickCount = counter;
-
-			int sectorDataLen = sizeof(SectorData);
-
-			int bytesSent = sendto(udpSocket, &sectorData, sectorDataLen, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
-			if (bytesSent > 0) {
-				System_printf("Publishing sector data (power value): %d\n", bytesSent);
-				System_flush();
-			}
-			Task_sleep(5000);
-		}
+	while (getLocalUdpSocket(&udpSocket) != 0) {
+		System_printf("Getting local UDP socket failed! Retrying ...\n");
+		System_flush();
+		Task_sleep(5000);
 	}
+
+	struct sockaddr_in targetAddress;
+	memset(&targetAddress, 0, sizeof(targetAddress));
+	targetAddress.sin_family = AF_INET;
+	targetAddress.sin_port = htons(44444);
+	targetAddress.sin_addr.s_addr = htonl(0xFFFFFFFF);
+
+	System_printf("Waiting for sector data to broadcast on UDP port 44444 ...\n");
+	System_flush();
+
+
 	while (1) {
-		if (Mailbox_pend(globalCommInfrastructure.sectorDataMailbox, &sectorData, BIOS_WAIT_FOREVER)) {
-			// TODO: use correct fields for sectorData
-			//System_printf("Publishing sector data (indicator): %c, (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", sectorData.indicator, sectorData.id, sectorData.ticks, sectorData.powerValue, sectorData.roundIdentifier);
+		if (Mailbox_pend(globalCommInfrastructure.sectorDataMailbox, &currentTrackData, BIOS_WAIT_FOREVER)) {
+
+			System_printf("Reveived sector data (indicator): %c, (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", currentTrackData.indicator, currentTrackData.id, currentTrackData.ticks, currentTrackData.powerValue, currentTrackData.roundIdentifier);
 			System_flush();
+
+			// invalid sector index
+			if ((currentTrackData.id - 1) >= MAX_SECTORS) {
+				System_printf("Sector index is out of range: %d\n", currentTrackData.id - 1);
+				System_flush();
+				continue;
+			}
+
+			sendBuffer = serialize_char(sendBuffer, currentTrackData.indicator);
+			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.id);
+			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.ticks);
+			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.roundIdentifier);
+			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.powerValue);
+
+			if (currentTrackData.id == MAX_SECTORS) {
+				bytesSent = sendto(udpSocket, startOfBuffer, 34, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
+				if (bytesSent <= 0) {
+					System_printf("Failed to send track via UDP broadcast.\n");
+					System_flush();
+				}
+				// reset
+				sendBuffer = startOfBuffer;
+			}
+
+
 		}
 	}
 }
