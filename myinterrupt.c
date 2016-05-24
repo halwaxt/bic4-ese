@@ -37,7 +37,7 @@ uint32_t s2 = 2;
 uint32_t s3 = 3;
 uint32_t s4 = 4;
 uint32_t s5 = 5;
-uint32_t s6 = 0;
+uint32_t s6 = 6;
 
 extern CommunicationInfrastructure globalCommInfrastructure;
 extern uint32_t tickCount;
@@ -98,8 +98,7 @@ void postSectorIndexEvent(uint32_t* s) {
 
 }
 
-void postSectorDataEvent(char indicator, uint32_t id, uint32_t powerValue, uint32_t roundIdentifier) {
-	myInformation.indicator = indicator;
+void postSectorDataEvent(uint32_t id, uint32_t powerValue, uint32_t roundIdentifier) {
 	myInformation.id = id;
 	myInformation.ticks = tickCount;
 	myInformation.powerValue = powerValue;

@@ -7,7 +7,6 @@ Queue_Handle uartQueue;
 
 // information, hold by the queue
 typedef struct SensorInformation {
-	char indicator;
 	uint32_t id;
 	uint32_t ticks;
 	uint32_t powerValue;
