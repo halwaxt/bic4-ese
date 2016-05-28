@@ -107,7 +107,7 @@ void PublisherTask() {
 	while (1) {
 		if (Mailbox_pend(globalCommInfrastructure.sectorDataMailbox, &currentTrackData, BIOS_WAIT_FOREVER)) {
 
-			System_printf("Reveived sector data (indicator): %c, (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", currentTrackData.indicator, currentTrackData.id, currentTrackData.ticks, currentTrackData.powerValue, currentTrackData.roundIdentifier);
+			System_printf("Reveived sector data (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", currentTrackData.id, currentTrackData.ticks, currentTrackData.powerValue, currentTrackData.roundIdentifier);
 			System_flush();
 
 			// invalid sector index
@@ -117,7 +117,6 @@ void PublisherTask() {
 				continue;
 			}
 
-			sendBuffer = serialize_char(sendBuffer, currentTrackData.indicator);
 			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.id);
 			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.ticks);
 			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.roundIdentifier);

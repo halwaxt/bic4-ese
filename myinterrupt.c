@@ -39,6 +39,8 @@ uint32_t s4 = 4;
 uint32_t s5 = 5;
 uint32_t s6 = 6;
 
+int i = 2;
+
 extern CommunicationInfrastructure globalCommInfrastructure;
 extern uint32_t tickCount;
 extern uint32_t lastInterruptTick;
@@ -114,11 +116,23 @@ void isr_1_2_sensor_method(UArg arg0) {
 	GPIOIntClear(GPIO_PORTH_BASE, GPIO_INT_PIN_0 | GPIO_INT_PIN_1);
 
 	snprintf(key_string, KEY_MAX_LENGTH, "%c%d", 'H', state);
-	if ((hashmap_get(mymap, key_string, (void**) (&value)) == 0) && possibleDebounce()) {
+	if (((hashmap_get(mymap, key_string, (void**) (&value)) == 0) && possibleDebounce())) {
 		setTickVariables();
 		System_printf("Finished Sektor %d\n", value->number);
 		postSectorIndexEvent(&(value->number));
-		postSectorDataEvent('H', state, (uint32_t) 0, (uint32_t) 0);
+		postSectorDataEvent(value->number, (uint32_t) 0, (uint32_t) 0);
+	}
+	else {
+		if(arg0 == 1) {
+			setTickVariables();
+			if(i == 1) {
+				i = 2;
+			}
+			else {
+				i = 1;
+			}
+			postSectorDataEvent(i, (uint32_t) 0, (uint32_t) 0);
+		}
 	}
 }
 
@@ -132,12 +146,15 @@ void isr_3_6_sensor_method(UArg arg0) {
 		setTickVariables();
 		System_printf("Finished Sektor %d\n", value->number);
 		postSectorIndexEvent(&(value->number));
-		postSectorDataEvent('K', state, (uint32_t) 0, (uint32_t) 0);
+		postSectorDataEvent(value->number, (uint32_t) 0, (uint32_t) 0);
 	}
 }
 
 void tick(void) {
 	tickCount++;
+	if(tickCount%3000 == 0) {
+		isr_1_2_sensor_method(1);
+	}
 }
 
 int setup_Clock_Task(uint32_t wait_ticks) {
