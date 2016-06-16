@@ -43,6 +43,7 @@
 #include <DRV8301.h>
 #include <TrackSupervisor.h>
 #include <Publisher.h>
+#include <Receiver.h>
 #include <myir.h>
 #include <myled.h>
 #include <myuart.h>
@@ -359,6 +360,7 @@ int main(void) {
 	SetupPwmControllerTask(&errorBlock);
 	SetupTrackSupervisorTask(&errorBlock);
 	SetupPublisherTask(&errorBlock);
+	SetupReceiverTask(&errorBlock);
 
 	prepareHardware();
 

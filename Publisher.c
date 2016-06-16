@@ -48,7 +48,7 @@ int getLocalUdpSocket(SOCKET *socketDescriptor) {
 	 hints.ai_socktype = SOCK_DGRAM;
 	 hints.ai_protocol = IPPROTO_UDP;
 
-	 int s = getaddrinfo(NULL, "44444", &hints, &result);
+	 int s = getaddrinfo(NULL, "55555", &hints, &result);
 	 if (s != 0) {
 		 System_abort("calling getaddrinfo failed!\n");
 	 }
@@ -97,17 +97,16 @@ void PublisherTask() {
 	struct sockaddr_in targetAddress;
 	memset(&targetAddress, 0, sizeof(targetAddress));
 	targetAddress.sin_family = AF_INET;
-	targetAddress.sin_port = htons(44444);
+	targetAddress.sin_port = htons(55555);
 	targetAddress.sin_addr.s_addr = htonl(0xFFFFFFFF);
 
-	System_printf("Waiting for sector data to broadcast on UDP port 44444 ...\n");
+	System_printf("Waiting for sector data to broadcast on UDP port 55555 ...\n");
 	System_flush();
-
 
 	while (1) {
 		if (Mailbox_pend(globalCommInfrastructure.sectorDataMailbox, &currentTrackData, BIOS_WAIT_FOREVER)) {
 
-			System_printf("Reveived sector data (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", currentTrackData.id, currentTrackData.ticks, currentTrackData.powerValue, currentTrackData.roundIdentifier);
+			System_printf("Send sector data (sector): %d, (ticks): %d, (power value): %d, (roundInformation): %d\n", currentTrackData.id, currentTrackData.ticks, currentTrackData.powerValue, currentTrackData.roundIdentifier);
 			System_flush();
 
 			// invalid sector index
@@ -123,13 +122,18 @@ void PublisherTask() {
 			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.powerValue);
 
 			if (currentTrackData.id == MAX_SECTORS) {
-				bytesSent = sendto(udpSocket, startOfBuffer, 34, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
+				bytesSent = sendto(udpSocket, startOfBuffer, 32, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
 				if (bytesSent <= 0) {
 					System_printf("Failed to send track via UDP broadcast.\n");
-					System_flush();
 				}
+				else {
+					System_printf("Sent %d bytes via UDP.\n", bytesSent);
+				}
+				System_flush();
+
 				// reset
 				sendBuffer = startOfBuffer;
+
 			}
 
 

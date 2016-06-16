@@ -14,4 +14,6 @@
 
 void SetupTrackSupervisorTask(Error_Block *errorBlock);
 
+void setSectorData(char sector1Token[], char powerValue1Token[], char sector2Token[], char powerValue2Token[], char roundIdentifierToken[]);
+
 #endif /* LOCAL_INC_TRACKSUPERVISOR_H_ */

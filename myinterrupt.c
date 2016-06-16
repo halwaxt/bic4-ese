@@ -131,6 +131,7 @@ void isr_1_2_sensor_method(UArg arg0) {
 			else {
 				i = 1;
 			}
+			postSectorIndexEvent(&i);
 			postSectorDataEvent(i, (uint32_t) 0, (uint32_t) 0);
 		}
 	}
@@ -152,7 +153,7 @@ void isr_3_6_sensor_method(UArg arg0) {
 
 void tick(void) {
 	tickCount++;
-	if(tickCount%3000 == 0) {
+	if(tickCount%500 == 0) {
 		isr_1_2_sensor_method(1);
 	}
 }
