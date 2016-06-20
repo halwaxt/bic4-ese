@@ -39,7 +39,7 @@ void setSectorData(char sector1Token[], char powerValue1Token[],
 			sector1Token, powerValue1Token, sector2Token, powerValue2Token,
 			roundIdentifierToken); */
 	System_flush();
-	sectorPower = malloc(7 * sizeof(int));
+	sectorPower = malloc(7 * sizeof(uint32_t));
 	if (sectorPosition == 0) {
 		sscanf(powerValue1Token, "%d", &sectorPowerB[1]);
 		sscanf(powerValue2Token, "%d", &sectorPowerB[2]);
