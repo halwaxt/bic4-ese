@@ -43,6 +43,7 @@ int i = 2;
 
 extern CommunicationInfrastructure globalCommInfrastructure;
 extern uint32_t tickCount;
+
 extern uint32_t lastInterruptTick;
 
 #define KEY_MAX_LENGTH (256)
@@ -153,9 +154,9 @@ void isr_3_6_sensor_method(UArg arg0) {
 
 void tick(void) {
 	tickCount++;
-	if(tickCount%500 == 0) {
+	/* if(tickCount%500 == 0) {
 		isr_1_2_sensor_method(1);
-	}
+	} */
 }
 
 int setup_Clock_Task(uint32_t wait_ticks) {

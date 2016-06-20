@@ -11,9 +11,10 @@
 #include <xdc/runtime/Error.h>
 #include <Communication.h>
 
-
 void SetupTrackSupervisorTask(Error_Block *errorBlock);
 
 void setSectorData(char sector1Token[], char powerValue1Token[], char sector2Token[], char powerValue2Token[], char roundIdentifierToken[]);
+uint32_t getCurrentRoundIdentifier();
+uint32_t getPowerValueBySectorId(int sectorId);
 
 #endif /* LOCAL_INC_TRACKSUPERVISOR_H_ */

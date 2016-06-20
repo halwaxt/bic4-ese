@@ -17,18 +17,27 @@ extern CommunicationInfrastructure globalCommInfrastructure;
 uint32_t sectorPowerA[] = { 6 * 8192, 5 * 8192, 4 * 8192, 3 * 8192, 2 * 8192, 1
 		* 8192 - 1, 0 };
 uint32_t sectorPowerB[] = { 1 * 8192, 2 * 8192, 3 * 8192, 4 * 8192, 5 * 8192, 6
-		* 8192 - 1, 1 };
+		* 8192 - 1, 0 };
+
 uint32_t *sectorPower;
 
 uint32_t sectorPosition = 0;
 
+uint32_t getCurrentRoundIdentifier() {
+	return sectorPower[6];
+}
+
+uint32_t getPowerValueBySectorId(int sectorId) {
+	return sectorPower[sectorId];
+}
+
 void setSectorData(char sector1Token[], char powerValue1Token[],
 		char sector2Token[], char powerValue2Token[],
 		char roundIdentifierToken[]) {
-	System_printf(
+	/* System_printf(
 			"#### Received sector data (sector): %s, (power value): %s, (sector): %s, (power value): %s, (roundInformation): %s\n",
 			sector1Token, powerValue1Token, sector2Token, powerValue2Token,
-			roundIdentifierToken);
+			roundIdentifierToken); */
 	System_flush();
 	sectorPower = malloc(7 * sizeof(int));
 	if (sectorPosition == 0) {
@@ -51,7 +60,7 @@ void TrackSupervisorTask() {
 	uint32_t sectorIndex = 0;
 	uint32_t currentPowerValue = 3 * 8192; // initial value for start
 
-	sectorPower = malloc(7 * sizeof(int));
+	sectorPower = malloc(7 * sizeof(uint32_t));
 	memcpy(sectorPower, sectorPowerA, 7 * sizeof(int));
 
 	if (! Mailbox_post(globalCommInfrastructure.pwmMailbox, &currentPowerValue,

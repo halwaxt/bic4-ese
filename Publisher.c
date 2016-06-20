@@ -13,6 +13,7 @@
 #include <Communication.h>
 #include <Publisher.h>
 #include <myinformation.h>
+#include <TrackSupervisor.h>
 
 extern CommunicationInfrastructure globalCommInfrastructure;
 
@@ -118,8 +119,8 @@ void PublisherTask() {
 
 			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.id);
 			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.ticks);
-			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.roundIdentifier);
-			sendBuffer = serialize_uint32(sendBuffer, currentTrackData.powerValue);
+			sendBuffer = serialize_uint32(sendBuffer, getCurrentRoundIdentifier());
+			sendBuffer = serialize_uint32(sendBuffer, getPowerValueBySectorId(currentTrackData.id));
 
 			if (currentTrackData.id == MAX_SECTORS) {
 				bytesSent = sendto(udpSocket, startOfBuffer, 32, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
