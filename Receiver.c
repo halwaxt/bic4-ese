@@ -87,7 +87,8 @@ void ReceiverTask() {
 	memset(&targetAddress, 0, sizeof(targetAddress));
 	targetAddress.sin_family = AF_INET;
 	targetAddress.sin_port = htons(44444);
-	targetAddress.sin_addr.s_addr = INADDR_BROADCAST;
+	//targetAddress.sin_addr.s_addr = INADDR_BROADCAST;
+	targetAddress.sin_addr.s_addr = htonl(0xC0A801FF);
 
 	status = bind(udpSocket, (struct sockaddr *) &targetAddress,
 			sizeof(targetAddress));
@@ -107,8 +108,8 @@ void ReceiverTask() {
 	while (1) {
 		Task_sleep(500);
 
-		addr_len = sizeof targetAddress;
-		bytesReceived = recv(udpSocket, buf, sizeof buf, 0);
+		//addr_len = sizeof targetAddress;
+		bytesReceived = recv(udpSocket, buf, 20*sizeof(char), 0);
 		if (bytesReceived > 0) {
 			sector1Token = strtok(buf, search);
 			powerValue1Token = strtok(NULL, search);
