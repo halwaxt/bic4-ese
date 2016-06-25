@@ -78,7 +78,7 @@ int getLocalUdpSocket(SOCKET *socketDescriptor) {
 
 
 void PublisherTask() {
-	const int MAX_SECTORS = 2;
+	const int MAX_SECTORS = 3;
 	//SensorInformation track[MAX_SECTORS];
 	SensorInformation currentTrackData;
 	//int currentSectorIndex = 0;
@@ -123,7 +123,7 @@ void PublisherTask() {
 			sendBuffer = serialize_uint32(sendBuffer, getPowerValueBySectorId(currentTrackData.id));
 
 			if (currentTrackData.id == MAX_SECTORS) {
-				bytesSent = sendto(udpSocket, startOfBuffer, 32, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
+				bytesSent = sendto(udpSocket, startOfBuffer, 16 * MAX_SECTORS, 0, (struct sockaddr *)&targetAddress, sizeof(targetAddress));
 				if (bytesSent <= 0) {
 					System_printf("Failed to send track via UDP broadcast.\n");
 				}

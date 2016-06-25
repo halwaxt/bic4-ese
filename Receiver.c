@@ -67,13 +67,15 @@ void ReceiverTask() {
 	int status;
 	uint32_t val;
 
-	char buf[20];
+	char buf[27];
 
 	char *search = ";";
 	char *sector1Token;
 	char *powerValue1Token;
 	char *sector2Token;
 	char *powerValue2Token;
+	char *sector3Token;
+	char *powerValue3Token;
 	char *roundIdentifierToken;
 
 	SOCKET udpSocket;
@@ -109,18 +111,20 @@ void ReceiverTask() {
 		Task_sleep(500);
 
 		//addr_len = sizeof targetAddress;
-		bytesReceived = recv(udpSocket, buf, 20*sizeof(char), 0);
+		bytesReceived = recv(udpSocket, buf, 27*sizeof(char), 0);
 		if (bytesReceived > 0) {
 			sector1Token = strtok(buf, search);
 			powerValue1Token = strtok(NULL, search);
 			sector2Token = strtok(NULL, search);
 			powerValue2Token = strtok(NULL, search);
+			sector3Token = strtok(NULL, search);
+			powerValue3Token = strtok(NULL, search);
 			roundIdentifierToken = strtok(NULL, search);
 
-			System_printf("Received sector data (sector): %s, (power value): %s, (sector): %s, (power value): %s, (roundInformation): %s\n", sector1Token, powerValue1Token, sector2Token, powerValue2Token, roundIdentifierToken);
+			System_printf("Received sector data (sector): %s, (power value): %s, (sector): %s, (power value): %s, (sector): %s, (power value): %s, (roundInformation): %s\n", sector1Token, powerValue1Token, sector2Token, powerValue2Token, sector3Token, powerValue3Token, roundIdentifierToken);
 			System_flush();
 
-			setSectorData(sector1Token, powerValue1Token, sector2Token, powerValue2Token, roundIdentifierToken);
+			setSectorData(sector1Token, powerValue1Token, sector2Token, powerValue2Token, sector3Token, powerValue3Token, roundIdentifierToken);
 
 			// TODO: This information has to be sent to TrackSupervisorTask
 

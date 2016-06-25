@@ -13,7 +13,7 @@
 
 void SetupTrackSupervisorTask(Error_Block *errorBlock);
 
-void setSectorData(char sector1Token[], char powerValue1Token[], char sector2Token[], char powerValue2Token[], char roundIdentifierToken[]);
+void setSectorData(char sector1Token[], char powerValue1Token[], char sector2Token[], char powerValue2Token[], char sector3Token[], char powerValue3Token[], char roundIdentifierToken[]);
 uint32_t getCurrentRoundIdentifier();
 uint32_t getPowerValueBySectorId(int sectorId);
 

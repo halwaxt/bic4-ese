@@ -154,11 +154,11 @@ void isr_3_6_sensor_method(UArg arg0) {
 
 void tick(void) {
 	tickCount++;
-	/*
-	if(tickCount%500 == 0) {
+
+	/* if(tickCount%5000 == 0) {
 		isr_1_2_sensor_method(1);
-	}
-	*/
+	} */
+
 }
 
 int setup_Clock_Task(uint32_t wait_ticks) {
@@ -196,14 +196,14 @@ void setupInterruptMap() {
 	// SETUP H2
 	pushMap('H', GPIO_INT_PIN_1, 2);
 
+	// SETUP K6
+	pushMap('K', GPIO_INT_PIN_6, 3);
+
 	// SETUP K4
-	pushMap('K', GPIO_INT_PIN_4, 3);
+	pushMap('K', GPIO_INT_PIN_4, 4);
 
 	// SETUP K5
-	pushMap('K', GPIO_INT_PIN_5, 4);
-
-	// SETUP K6
-	pushMap('K', GPIO_INT_PIN_6, 5);
+	pushMap('K', GPIO_INT_PIN_5, 5);
 
 	// SETUP K7
 	pushMap('K', GPIO_INT_PIN_7, 6);

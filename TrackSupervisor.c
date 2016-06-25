@@ -33,6 +33,7 @@ uint32_t getPowerValueBySectorId(int sectorId) {
 
 void setSectorData(char sector1Token[], char powerValue1Token[],
 		char sector2Token[], char powerValue2Token[],
+		char sector3Token[], char powerValue3Token[],
 		char roundIdentifierToken[]) {
 	/* System_printf(
 			"#### Received sector data (sector): %s, (power value): %s, (sector): %s, (power value): %s, (roundInformation): %s\n",
@@ -43,12 +44,14 @@ void setSectorData(char sector1Token[], char powerValue1Token[],
 	if (sectorPosition == 0) {
 		sscanf(powerValue1Token, "%d", &sectorPowerB[1]);
 		sscanf(powerValue2Token, "%d", &sectorPowerB[2]);
+		sscanf(powerValue3Token, "%d", &sectorPowerB[3]);
 		sscanf(roundIdentifierToken, "%d", &sectorPowerB[6]);
 		sectorPosition = 1;
 		memcpy(sectorPower, sectorPowerB, 7 * sizeof(int));
 	} else {
 		sscanf(powerValue1Token, "%d", &sectorPowerA[1]);
 		sscanf(powerValue2Token, "%d", &sectorPowerA[2]);
+		sscanf(powerValue3Token, "%d", &sectorPowerA[3]);
 		sscanf(roundIdentifierToken, "%d", &sectorPowerA[6]);
 		sectorPosition = 0;
 		memcpy(sectorPower, sectorPowerA, 7 * sizeof(int));
